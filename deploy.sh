@@ -28,7 +28,7 @@ set -e
 
 run_step "git pull origin main"
 #! run_step "git reset --hard origin/main"
-run_step "cd web"
+run_step "cd WEB"
 run_step "npm ci"
 run_step "npm run build"
 run_step "cd ../"
