@@ -36,7 +36,10 @@ run_step "pm2 reload $APP_NAME"
 
 #! FOR API
 run_step "cd API"
-run_step "pip install -r requirements.txt"
+run_step "python3 -m venv venv"
+run_step "source venv/bin/activate"
+run_step "venv/bin/pip install --upgrade pip"
+run_step "venv/bin/pip install -r requirements.txt"
 run_step "cd ../"
 run_step "pm2 reload $API_NAME"
 
