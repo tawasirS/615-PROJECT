@@ -26,13 +26,19 @@ echo "======================================"
 
 set -e
 
+#! FOR WEB
 run_step "git pull origin main"
-#! run_step "git reset --hard origin/main"
 run_step "cd WEB"
 run_step "npm ci"
 run_step "npm run build"
 run_step "cd ../"
 run_step "pm2 reload $APP_NAME"
+
+#! FOR API
+run_step "cd API"
+run_step "pip install -r requirements.txt"
+run_step "cd ../"
+run_step "pm2 reload $API_NAME"
 
 echo ""
 echo "======================================"
