@@ -1,7 +1,7 @@
 #!/bin/bash
 
-APP_NAME="615-web@56151"
-API_NAME="615-api@56152"
+APP_NAME="615-WEB@56151"
+API_NAME="615-API@56152"
 LOG_DIR="../logs"
 LOG_FILE="$LOG_DIR/deploy_$(date '+%Y-%m-%d_%H-%M-%S').log"
 
