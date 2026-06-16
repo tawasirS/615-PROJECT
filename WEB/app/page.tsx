@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex flex-1 w-full max-w-6xl flex-col items-center justify-center py-16 px-6 bg-white">
-        <h1 className="text-3xl font-bold mb-4">615 Project V1</h1>
+        <h1 className="text-3xl font-bold mb-4">615 Project V1.2</h1>
         <p className="text-zinc-600 mb-8">โปรแกรมจัดการข้อมูลการเช่า</p>
         <div className="grid grid-cols-4 gap-4 w-full max-w-2xl mb-6">
           <div className="p-6 bg-blue-100 rounded-lg shadow text-center" >ข้อมูล</div>

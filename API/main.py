@@ -7,4 +7,4 @@ async def root():
 
 @app.get("/status")
 async def status():
-    return {"status": "OK"}
+    return {"status": "OK 2"}
