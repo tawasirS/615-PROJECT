@@ -3,17 +3,13 @@
 set -Eeuo pipefail
 
 # ==================================================
-# Project config
+# 615 Project — Docker Deploy Script
+# รองรับ Raspberry Pi ARM64
 # ==================================================
-APP_NAME="615-WEB@56151"
-API_NAME="615-API@56152"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 PROJECT_DIR="$SCRIPT_DIR"
-WEB_DIR="$PROJECT_DIR/WEB"
-API_DIR="$PROJECT_DIR/API"
-VENV_DIR="$API_DIR/venv"
 
 LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/deploy_$(date '+%Y-%m-%d_%H-%M-%S').log"
@@ -113,86 +109,69 @@ run_step "Pull latest code from main" \
 
 
 # ==================================================
-# WEB deploy
+# Prepare .env
 # ==================================================
-run_step_in_dir \
-    "Install WEB dependencies" \
-    "$WEB_DIR" \
-    npm ci
+if [[ ! -f "$PROJECT_DIR/.env" ]]; then
+    run_step "Create .env from .env.example" \
+        cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
 
-
-run_step_in_dir \
-    "Build WEB" \
-    "$WEB_DIR" \
-    npm run build
-
-
-# ==================================================
-# API deploy
-# ==================================================
-if [[ ! -x "$VENV_DIR/bin/python" ]]; then
-    run_step "Create Python virtual environment" \
-        python3 -m venv "$VENV_DIR"
-else
-    echo "Python venv already exists: $VENV_DIR"
+    echo ""
+    echo "⚠   Please edit .env and set POSTGRES_PASSWORD before continuing."
+    echo "    Then re-run this script."
+    exit 1
 fi
 
 
-run_step \
-    "Upgrade pip" \
-    "$VENV_DIR/bin/python" -m pip install --upgrade pip
-
-
-run_step \
-    "Install API dependencies" \
-    "$VENV_DIR/bin/python" -m pip install -r "$API_DIR/requirements.txt"
-
-
-run_step \
-    "Check Python syntax" \
-    "$VENV_DIR/bin/python" -m compileall -q "$API_DIR"
-
-
 # ==================================================
-# Database migration
-# IMPORTANT:
-# Server runs upgrade only.
-# Do NOT run revision --autogenerate on production.
+# Docker Compose build & start
 # ==================================================
 run_step_in_dir \
-    "Apply Alembic database migration" \
-    "$API_DIR" \
-    "$VENV_DIR/bin/alembic" upgrade head
+    "Docker Compose build (ARM64)" \
+    "$PROJECT_DIR" \
+    docker compose build
 
 
 # ==================================================
-# Reload PM2
+# Database migration (run once via migration service)
 # ==================================================
-run_step \
-    "Reload WEB PM2 process" \
-    pm2 reload "$APP_NAME" --update-env
+run_step_in_dir \
+    "Run Alembic migration" \
+    "$PROJECT_DIR" \
+    docker compose run --rm migration
 
 
-run_step \
-    "Reload API PM2 process" \
-    pm2 reload "$API_NAME" --update-env
-
-
-run_step "Show PM2 status" pm2 status
+# ==================================================
+# Start all services
+# ==================================================
+run_step_in_dir \
+    "Start all services with Docker Compose" \
+    "$PROJECT_DIR" \
+    docker compose up -d
 
 
 # ==================================================
 # Health checks
-# เปลี่ยน path/port ได้ตาม config PM2 จริง
 # ==================================================
-run_step \
-    "Check WEB health" \
-    wait_for_http "WEB" "http://127.0.0.1:56151/"
+echo ""
+echo "Waiting for services to be ready..."
+sleep 5
 
+run_step \
+    "Check Nginx (port 80)" \
+    wait_for_http "Nginx" "http://127.0.0.1/"
 
 run_step \
     "Check API health" \
-    wait_for_http "API" "http://127.0.0.1:56152/"
+    wait_for_http "API" "http://127.0.0.1/api/"
+
+
+# ==================================================
+# Show status
+# ==================================================
+run_step_in_dir \
+    "Docker Compose status" \
+    "$PROJECT_DIR" \
+    docker compose ps
 
 
 echo ""

@@ -1,5 +1,7 @@
-// API Client สำหรับเชื่อมต่อ FastAPI Backend (พอร์ต 8000)
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+// API Client สำหรับเชื่อมต่อ FastAPI Backend
+// ใน Docker: ใช้ /api (ผ่าน Nginx reverse proxy)
+// Local dev: ตั้งค่า NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export class ApiError extends Error {
   status: number;

@@ -1,0 +1,114 @@
+name: 615-project
+
+# ============================================================
+# Docker Compose สำหรับ 615 Project
+# - Frontend: Next.js (production standalone)
+# - API: FastAPI + SQLAlchemy + Alembic
+# - DB: PostgreSQL
+# - Nginx: reverse proxy
+#
+# รองรับทั้ง Windows Dev และ Raspberry Pi ARM64
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL
+  # ----------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: 615-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # FastAPI Backend
+  # ----------------------------------------------------------
+  api:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    image: 615-api:latest
+    container_name: 615-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      API_ROOT_PATH: /api
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ----------------------------------------------------------
+  # Alembic Migration (run-once job)
+  # ----------------------------------------------------------
+  migration:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    image: 615-api:latest
+    container_name: 615-migration
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "alembic upgrade head"]
+
+  # ----------------------------------------------------------
+  # Next.js Frontend
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./WEB
+      dockerfile: Dockerfile
+    image: 615-frontend:latest
+    container_name: 615-frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  # ----------------------------------------------------------
+  # Nginx Reverse Proxy
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: 615-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - api
+
+volumes:
+  pgdata:
+    name: 615-pgdata
