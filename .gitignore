@@ -2,6 +2,9 @@ API/__pycache__/
 API/venv/
 API/alembic
 
+__pycache__/
+*.pyc
+
 # Docker
 .env
 logs/
