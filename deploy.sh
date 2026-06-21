@@ -2,6 +2,9 @@
 
 set -Eeuo pipefail
 
+WEB_DIR=./WEB
+API_DIR=./API
+
 # ==================================================
 # 615 Project — Docker Deploy Script
 # รองรับ Raspberry Pi ARM64
