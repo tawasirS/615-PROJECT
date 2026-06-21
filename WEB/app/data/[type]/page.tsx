@@ -1,35 +1,38 @@
-import DataTable from "../../components/DataTable";
 import SharedShell from "../../SharedShell";
-import PageHeader from "../../components/PageHeader";
-import Container from "../../components/Container";
-import ValidatedForm from "@/app/components/ValidatedForm";
+import EntityTable from "../../components/EntityTable";
+import { EntityType } from "../../lib/entity-config";
 
-export default function DashboardPage() {
+export default async function DataPage(props: { params: Promise<{ type: string }> }) {
+  const { type } = await props.params;
+
+  // Map URL path to entity type
+  const typeMap: Record<string, EntityType> = {
+    area: "area",
+    tenant: "tenant",
+    contract: "contract",
+    invoice: "invoice",
+    meter: "meter",
+    payment: "payment",
+    document: "document",
+    user: "user",
+  };
+
+  const entityType = typeMap[type];
+
+  if (!entityType) {
     return (
-        <SharedShell>
-            <div className="grid grid-cols-2 gap-2">
-                <div className="">
-                    <div className="bg-white shadow rounded-lg p-6">
-                        {/* <PageHeader title="Dashboard" subtitle="Overview & examples" /> */}
-                        <DataTable />
-                    </div>
-                </div>
-                <div className="">
-                    <div className="bg-white shadow rounded-lg p-6">
-                        <h6 className="font-medium mb-2">ชื่อ</h6>
-                        <ValidatedForm>
-                            <div className="grid grid-cols-2 gap-3">
-                                <input name="first" data-required="true" placeholder="First name" className="w-full border px-3 py-2 rounded" />
-                                <input name="last" data-required="true" placeholder="Last name" className="w-full border px-3 py-2 rounded" />
-                                <input name="email" placeholder="Email" className="w-full border px-3 py-2 rounded" />
-                            </div>
-                            <div className="mt-2">
-                                <button type="submit" className="btn-primary">Submit</button>
-                            </div>
-                        </ValidatedForm>
-                    </div>
-                </div>
-            </div>
-        </SharedShell>
+      <SharedShell>
+        <div className="text-center py-16">
+          <h1 className="text-2xl font-semibold text-zinc-600">ไม่พบข้อมูลประเภทนี้</h1>
+          <p className="text-zinc-400 mt-2">กรุณาตรวจสอบ URL อีกครั้ง</p>
+        </div>
+      </SharedShell>
     );
+  }
+
+  return (
+    <SharedShell>
+      <EntityTable type={entityType} />
+    </SharedShell>
+  );
 }
